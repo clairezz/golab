@@ -1,0 +1,10 @@
+<seelog>
+    <outputs formatid="main">
+        <buffered size="8388608" flushperiod="1">
+            <rollingfile type="date" filename="D:\www\golanxin\src\mydev\pool\logs\log" fullname="true" datepattern="2006.01.02" maxrolls="7"/>
+        </buffered>
+    </outputs>
+    <formats>
+        <format id="main" format="[%Date %Time] [%LEVEL] [%Func|%Line] | %Msg%n"/>
+    </formats>
+</seelog>
