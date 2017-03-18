@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-const CONFIG_FILE  = "D:\\www\\golanxin\\src\\golab\\conf\\logger.xml"
+const CONFIG_FILE  = "D:\\www\\godev\\src\\golab\\conf\\logger.xml"
 
 // TODO 配置文件相对路径
 func InitLogger() {

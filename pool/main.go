@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/cihub/seelog"
-	"mydev/golab/util"
-	"mydev/pool/pool"
+	"golab/util"
+	"golab/pool/pool"
 )
 
 const (
