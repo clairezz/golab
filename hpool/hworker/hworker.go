@@ -4,11 +4,12 @@ import (
 	"golab/hpool/hjob"
 	"golab/pool/pool"
 	"github.com/satori/go.uuid"
+	"fmt"
 )
 
 const (
-	ADDCHAN_BUF = 1
-	DELCHAN_BUF = 1
+	ADDCHAN_BUF = 2
+	DELCHAN_BUF = 2
 	JOBQUEUE_LEN = 10 // TODO 如何限制？ ==》由 pool 控制？
 )
 
@@ -20,42 +21,44 @@ type HjobWrap struct {
 }
 
 type Hworker struct {
-	jq map[string] *hjob.Hjob // 任务队列， 以任务名为 key
-	pending pool.SafePending // 待执行的任务数量， 包括 channel 中的（还没来得及 insert 进 map）和 map 中的
-	addChan chan HjobWrap // 向 map 中添加一个元素， sender 是用户， receiver 是执行任务的那个 goroutine
-	delChan chan string // 从 map 中删除一个元素， sender 是用户
+	jq      map[string] *hjob.Hjob // 任务队列， 以任务名为 key
+	Pending pool.SafePending       // 待执行的任务数量， 包括 channel 中的（还没来得及 insert 进 map）和 map 中的
+	addChan chan HjobWrap          // 向 map 中添加一个元素， sender 是用户， receiver 是执行任务的那个 goroutine
+	delChan chan string            // 从 map 中删除一个元素， sender 是用户
 }
 
-func NewHworker () {
+func NewHworker () *Hworker{
+	fmt.Println("----------------")
 	return &Hworker{
 		jq: make(map[string] *hjob.Hjob, JOBQUEUE_LEN),
-		pending: pool.SafePending{0},
+		Pending: pool.SafePending{},
 		addChan: make(chan HjobWrap, ADDCHAN_BUF),
-		delChan: make(chan HjobWrap, DELCHAN_BUF),
+		delChan: make(chan string, DELCHAN_BUF),
 	}
 }
 
 // 用户不用提供jobName，由函数实现生成uuid作为jobName，并返回jobName， 以便于删除等操作
-func (hw *Hworker) AddJob (job *Hworker) string { // TODO 重名job
+func (hw *Hworker) AddJob (job *hjob.Hjob) string { // TODO 重名job
 	key := uuid.NewV4().String()
 	hw.addChan <- HjobWrap{key, job}
-	hw.pending.Inc()
+	hw.Pending.Inc()
+	return key
 }
 
 func (hw *Hworker) DelJob (jobName string) {
 	hw.delChan <- jobName
-	hw.pending.Dec() // TODO 一定能删除成功吗？ 实际没有删除成功pending却减 1 的情况如何处理？
+	hw.Pending.Dec() // TODO 一定能删除成功吗？ 实际没有删除成功pending却减 1 的情况如何处理？
 }
 
 func (hw *Hworker) Run () {
 	go func() {
 		for {
 			select {
-			case jw := <-hw.addChan: // 添加
-				hw.jq[jw.key] = jw.value
-			case jn := <-hw.delChan: // 删除
-				delete(hw.jq, jn)
-			default:
+			case jw := <-hw.addChan: // 添加信号
+				hw.jq[jw.key] = jw.value // 实际的添加
+			case jn := <-hw.delChan: // 删除信号
+				delete(hw.jq, jn) // 实际的删除
+			default: // 取出一个job并执行
 				for jobName, job := range hw.jq { // 查询一个元素
 					delete(hw.jq, jobName)
 					job.Handler()

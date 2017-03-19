@@ -6,25 +6,25 @@ import (
 )
 
 type SafePending struct {
-	pending int
+	Pending int
 	sync.RWMutex
 }
 
 func (s *SafePending) Inc() {
 	s.Lock()
-	s.pending++
+	s.Pending++
 	s.Unlock()
 }
 
 func (s *SafePending) Dec() {
 	s.Lock()
-	s.pending--
+	s.Pending--
 	s.Unlock()
 }
 
 func (s *SafePending) Get() int {
 	s.RLock()
-	n := s.pending
+	n := s.Pending
 	s.RUnlock()
 	return n
 }
