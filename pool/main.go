@@ -11,8 +11,7 @@ import (
 )
 
 const (
-	CLIENT_CNT       = 5000
-	LOGGER_CONF_PATH = "D:\\www\\golanxin\\src\\mydev\\golab\\conf\\logger.xml"
+	CLIENT_CNT       = 50
 )
 
 // TODO

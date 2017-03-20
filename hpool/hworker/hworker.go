@@ -4,7 +4,8 @@ import (
 	"golab/hpool/hjob"
 	"golab/pool/pool"
 	"github.com/satori/go.uuid"
-	"fmt"
+	"sync"
+	"github.com/cihub/seelog"
 )
 
 const (
@@ -28,20 +29,22 @@ type Hworker struct {
 }
 
 func NewHworker () *Hworker{
-	fmt.Println("----------------")
 	return &Hworker{
 		jq: make(map[string] *hjob.Hjob, JOBQUEUE_LEN),
-		Pending: pool.SafePending{},
+		Pending: pool.SafePending{0,sync.RWMutex{}},
 		addChan: make(chan HjobWrap, ADDCHAN_BUF),
 		delChan: make(chan string, DELCHAN_BUF),
 	}
 }
 
-// 用户不用提供jobName，由函数实现生成uuid作为jobName，并返回jobName， 以便于删除等操作
-func (hw *Hworker) AddJob (job *hjob.Hjob) string { // TODO 重名job
+// 为避免重名，用户不用提供jobName，由函数实现生成uuid作为jobName，并返回jobName， 以便于删除等操作
+func (hw *Hworker) AddJob (job *hjob.Hjob) string {
 	key := uuid.NewV4().String()
-	hw.addChan <- HjobWrap{key, job}
+	seelog.Debugf("uuid key: %s\n", key)
+	jw := HjobWrap{key, job}
+	hw.addChan <- jw
 	hw.Pending.Inc()
+
 	return key
 }
 
@@ -57,14 +60,23 @@ func (hw *Hworker) Run () {
 			case jw := <-hw.addChan: // 添加信号
 				hw.jq[jw.key] = jw.value // 实际的添加
 			case jn := <-hw.delChan: // 删除信号
+				hw.addAll() // 先将addChan中的所有job添加到map中再执行delete，避免delete时还未add
 				delete(hw.jq, jn) // 实际的删除
 			default: // 取出一个job并执行
 				for jobName, job := range hw.jq { // 查询一个元素
 					delete(hw.jq, jobName)
-					job.Handler()
+					job.Handler(job.Data, job.RespCh)
+
 					break
 				}
 			}
 		}
 	}()
+}
+
+func (hw *Hworker) addAll() {
+	for i := 0; i < len(hw.addChan); i++ {
+		jw := <- hw.addChan
+		hw.jq[jw.key] = jw.value
+	}
 }

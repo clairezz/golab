@@ -1,7 +1,12 @@
 package hpool
 
 import (
+	"container/heap"
+	"github.com/juju/errors"
+
 	"golab/hpool/hworker"
+	"golab/hpool/hjob"
+
 )
 
 // 管理worker， 每次返回给用户一个负载最小的worker
@@ -16,7 +21,7 @@ type Hpool struct {
 
 func NewHpool () *Hpool{
 	p := &Hpool{
-		workers: make([]*hworker.Hworker, WORKER_CNT),
+		workers: make([]*hworker.Hworker, 0,  WORKER_CNT), //
 	}
 	for i := 0; i < WORKER_CNT; i++ {
 		worker := hworker.NewHworker()
@@ -57,4 +62,16 @@ func (p *Hpool) Pop() interface{}  {
 	item := old[n -1]
 	p.workers = old[:n -1]
 	return item
+}
+
+func (p *Hpool) PushJob(job *hjob.Hjob) (string, error) {
+	if len(p.workers) == 0 {
+		return "", errors.New("error: no worker in the pool")
+	}
+
+	worker := p.workers[0]
+	key := worker.AddJob(job)
+	heap.Fix(p,0)
+
+	return key, nil
 }
