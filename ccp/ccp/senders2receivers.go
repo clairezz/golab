@@ -86,5 +86,5 @@ func Senders2Receivers() {
 
 	wg.Wait()
 	fmt.Println("-------------DONE----------------")
-	fmt.Printf("data reminded: %d\n", <-dataCh)
+	fmt.Printf("reminded data cnt: %d\n", len(dataCh))
 }

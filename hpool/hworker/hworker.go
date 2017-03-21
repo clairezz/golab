@@ -1,11 +1,13 @@
 package hworker
 
 import (
-	"golab/hpool/hjob"
-	"golab/pool/pool"
-	"github.com/satori/go.uuid"
 	"sync"
+
+	"github.com/satori/go.uuid"
 	"github.com/cihub/seelog"
+
+	"github.com/clairezz/golab/hpool/hjob"
+	"github.com/clairezz/golab/util"
 )
 
 const (
@@ -23,7 +25,7 @@ type HjobWrap struct {
 
 type Hworker struct {
 	jq      map[string] *hjob.Hjob // 任务队列， 以任务名为 key
-	Pending pool.SafePending       // 待执行的任务数量， 包括 channel 中的（还没来得及 insert 进 map）和 map 中的
+	Pending util.SafePending       // 待执行的任务数量， 包括 channel 中的（还没来得及 insert 进 map）和 map 中的
 	addChan chan HjobWrap          // 向 map 中添加一个元素， sender 是用户， receiver 是执行任务的那个 goroutine
 	delChan chan string            // 从 map 中删除一个元素， sender 是用户
 }
@@ -31,7 +33,7 @@ type Hworker struct {
 func NewHworker () *Hworker{
 	return &Hworker{
 		jq: make(map[string] *hjob.Hjob, JOBQUEUE_LEN),
-		Pending: pool.SafePending{0,sync.RWMutex{}},
+		Pending: util.SafePending{0,sync.RWMutex{}},
 		addChan: make(chan HjobWrap, ADDCHAN_BUF),
 		delChan: make(chan string, DELCHAN_BUF),
 	}

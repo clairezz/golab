@@ -2,11 +2,11 @@ package hpool
 
 import (
 	"container/heap"
+
 	"github.com/juju/errors"
 
-	"golab/hpool/hworker"
-	"golab/hpool/hjob"
-
+	"github.com/clairezz/golab/hpool/hworker"
+	"github.com/clairezz/golab/hpool/hjob"
 )
 
 // 管理worker， 每次返回给用户一个负载最小的worker

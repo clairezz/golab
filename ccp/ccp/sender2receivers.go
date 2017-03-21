@@ -2,13 +2,13 @@ package ccp
 
 import (
 	"fmt"
-	"sync"
 	"math/rand"
+	"sync"
 	"time"
 )
 
 // Sender2Receivers 模拟了一个 sender，多个 receiver 的场景下 channel 关闭方式
-func Sender2Receivers () {
+func Sender2Receivers() {
 	rand.Seed(time.Now().UnixNano())
 	var maxNum = 1000
 
@@ -19,9 +19,9 @@ func Sender2Receivers () {
 
 	// receiver
 	index := 0 // receiver的编号
-	for  rand.Intn(maxNum) !=0 {
+	for rand.Intn(maxNum) != 0 {
 		wg.Add(1)
-		go func (idx int) {
+		go func(idx int) {
 			defer wg.Done()
 			// 从 channel 中接收数据直到channel
 			for data := range dataChan {
@@ -36,7 +36,7 @@ func Sender2Receivers () {
 	for {
 		// 当随机数为 maxNum-1 时，sender 关闭 channel 并退出循环
 		d := rand.Intn(maxNum)
-		if d == maxNum -1 {
+		if d == maxNum-1 {
 			close(dataChan)
 			break
 		} else {

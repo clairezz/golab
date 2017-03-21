@@ -9,7 +9,6 @@ import (
 
 const CONF_FILE_NAME = "logger.xml"
 
-// TODO 配置文件相对路径
 func InitLogger() {
 	path := GetConfPathFromOsArgs()
 	file := filepath.Join(path, CONF_FILE_NAME)
